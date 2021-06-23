@@ -1,14 +1,19 @@
 const Play=require('../models/Play');
 
-async function getAllPlays(){
-return await Play.find({public: true}).sort({createdAt: -1}).lean();
+async function getAllPlays(orderBy){
+    let sort = { createdAt: -1};
+    if (orderBy=='likes'){
+        sort = { usersLiked: 'desc'}
+    }
 
+
+
+return await Play.find({public: true}).sort(sort).lean();
 }
 
 async function getPlayById(id){
     const play=await Play.findById(id).populate('usersLiked').lean();
-    console.log('play returned by getplay by id service\n')
-    console.log(play)
+
 // return await Play.findById(id).populate('usersLiked').lean();
 return play;
 }
@@ -29,11 +34,25 @@ async function createPlay(playData){
 }
 
 async function editPlay(id, playData){
+const play=await Play.findById(id);
+play.title=playData.title;
+play.description=playData.description;
+play.imageUrl=playData.imageUrl;
+play.public=Boolean(playData.public);
 
+return await play.save();
+}
+
+async function likePlay(playId, userId){
+    const play=await Play.findById(playId);
+
+    play.usersLiked.push(userId);
+    console.log('play liked!')
+     return await play.save();
 }
 
 async function deletePlay(id){
-
+return await Play.findByIdAndDelete(id);
 }
 
 module.exports={
@@ -41,5 +60,6 @@ module.exports={
     getPlayById,
     createPlay,
     editPlay,
-    deletePlay
+    deletePlay,
+    likePlay
 }
